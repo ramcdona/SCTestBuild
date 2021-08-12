@@ -1,0 +1,91 @@
+name: CMake Build Matrix
+
+on:
+  push:
+    branches: main
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    env:
+      BUILD_ARCH: ${{ matrix.config.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Windows 64",
+            os: windows-2019,
+            arch: x64,
+          }
+        - {
+            name: "Windows 32",
+            os: windows-2019,
+            arch: Win32,
+          }
+        - {
+            name: "Ubuntu 18.04",
+            os: ubuntu-18.04,
+            arch: x64,
+          }
+        - {
+            name: "Ubuntu 20.04",
+            os: ubuntu-20.04,
+            arch: x64,
+          }
+        - {
+            name: "macOS 10.15",
+            os: macos-10.15,
+            arch: x64,
+          }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name:  Build Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      run:   |
+        mkdir build buildlibs
+
+        cd $GITHUB_WORKSPACE/buildlibs
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../Libraries
+        make
+        
+        cd $GITHUB_WORKSPACE/build
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DLIBRARY_PATH=$GITHUB_WORKSPACE/buildlibs ..
+        make
+        
+    - name:  Build Windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run:   |
+        mkdir build buildlibs
+
+        cd $GITHUB_WORKSPACE\\buildlibs
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -A $BUILD_ARCH ..\\Libraries
+        cmake --build . --config $BUILD_TYPE
+
+        cd $GITHUB_WORKSPACE\\build
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DLIBRARY_PATH=$GITHUB_WORKSPACE\\buildlibs -A $BUILD_ARCH ..
+        cmake --build . --target package --config $BUILD_TYPE
+
+    - name:  Build MacOS
+      if: runner.os == 'macos'
+      shell: bash
+      run:   |
+        mkdir build buildlibs
+
+        cd $GITHUB_WORKSPACE/buildlibs
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../Libraries
+        make
+        
+        cd $GITHUB_WORKSPACE/build
+        cmake -DLIBRARY_PATH=$GITHUB_WORKSPACE/buildlibs -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+        make
+
