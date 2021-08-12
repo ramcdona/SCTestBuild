@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT (APP)
 
 # add the OpenVSP specific cmake files to module path
-set(CMAKE_MODULE_PATH ${APP_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 INCLUDE( SetupC++11 )
 
